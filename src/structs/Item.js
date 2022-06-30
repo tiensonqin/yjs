@@ -1,4 +1,3 @@
-
 import {
   GC,
   getState,
@@ -23,6 +22,7 @@ import {
   readContentType,
   addChangedTypeToTransaction,
   isDeleted,
+  ContentString,
   DeleteSet, UpdateDecoderV1, UpdateDecoderV2, UpdateEncoderV1, UpdateEncoderV2, ContentType, ContentDeleted, StructStore, ID, AbstractType, Transaction // eslint-disable-line
 } from '../internals.js'
 
@@ -464,10 +464,35 @@ export class Item extends AbstractStruct {
           conflictingItems.add(o)
           if (compareIDs(this.origin, o.origin)) {
             // case 1
-            if (o.id.client < this.id.client) {
+
+            let thisContentStr
+            let oContentStr
+
+            if (this.content.constructor === ContentString) {
+              thisContentStr = /** @type {ContentString} */ (this.content).str
+              oContentStr = /** @type {ContentString} */ (o.content).str
+
+              console.log("this: ", JSON.stringify(thisContentStr))
+              console.log("o: ", JSON.stringify(oContentStr))
+            }
+
+            const thisIsNewLine = thisContentStr && oContentStr && (thisContentStr[0] === '\n') && (oContentStr[0] != '\n');
+            const oIsNewLine = thisContentStr && oContentStr && (oContentStr[0] === '\n') && (thisContentStr[0] != '\n');
+
+            if (oIsNewLine) {
+              console.log("oIsNewLine")
+              console.log("< this:", /** @type {ContentString} */ (this.content).str)
+              console.log("< o:", /** @type {ContentString} */ (o.content).str)
+              break
+            } else if (thisIsNewLine || o.id.client < this.id.client) {
+              console.log("thisIsNewLine")
+              console.log("< this:", /** @type {ContentString} */ (this.content).str)
+              console.log("< o:", /** @type {ContentString} */ (o.content).str)
               left = o
               conflictingItems.clear()
             } else if (compareIDs(this.rightOrigin, o.rightOrigin)) {
+              console.log("right origin this:", /** @type {ContentString} */ (this.content).str)
+              console.log("right origin o:", /** @type {ContentString} */ (o.content).str)
               // this and o are conflicting and point to the same integration points. The id decides which item comes first.
               // Since this is to the left of o, we can break here
               break
